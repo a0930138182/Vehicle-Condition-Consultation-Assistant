@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>車況問診助手（行動裝置版）</title>
+<style>
+:root {
+  --color-primary: #1b5e73;
+  --color-primary-dark: #123f4d;
+  --color-primary-light: #2d7d96;
+  --color-accent: #0f6cbd;
+  --color-bg: #faf9f8;
+  --color-surface: #ffffff;
+  --color-border: #e1dfdd;
+  --color-text: #201f1e;
+  --color-text-secondary: #605e5c;
+  --color-success: #107c10;
+  --color-danger: #d13438;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --radius: 6px;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  /* iOS Safari 網址列動態縮放時，避免整體被壓縮跑版 */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "Heiti TC", "Segoe UI", -apple-system, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  /* 避免手機上長按文字出現系統選單／複製提示干擾操作 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-shell {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+  /* iPhone 瀏海／底部手勢列安全區域 */
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
+  padding-bottom: max(60px, calc(env(safe-area-inset-bottom) + 24px));
+}
+
+.platform-notice {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  background: #fff8e6;
+  border: 1px solid #f0dca0;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #7a5c00;
+  line-height: 1.6;
+}
+
+.platform-notice.hidden { display: none; }
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  border-radius: var(--radius);
+  color: #fff;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-md);
+}
+
+.header-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.button-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.fn-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 14px 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+  box-shadow: var(--shadow-sm);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fn-btn:hover {
+  background: #f3f9fb;
+  box-shadow: var(--shadow-md);
+}
+
+.fn-btn:active {
+  transform: translateY(1px);
+}
+
+.fn-btn.active {
+  border-left-color: var(--color-danger);
+  background: #fdf3f4;
+}
+
+.fn-btn-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.status-bar {
+  padding: 10px 16px;
+  background: #eff6f9;
+  border: 1px solid #cfe6ee;
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--color-primary-dark);
+  margin-bottom: 20px;
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+.status-bar.error {
+  background: #fdf3f4;
+  border-color: #f3caca;
+  color: var(--color-danger);
+}
+
+.status-bar.success {
+  background: #eff9ef;
+  border-color: #c9e8c9;
+  color: var(--color-success);
+}
+
+.transcript-box, .summary-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.box-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.box-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.box-title-row .box-title {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-danger);
+  font-variant-numeric: tabular-nums;
+}
+
+.rec-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  animation: pulse-dot 1.2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+.fn-btn-secondary {
+  border-left-color: var(--color-text-secondary);
+  background: #faf9f8;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.fn-btn-secondary:hover {
+  background: #f3f2f1;
+}
+
+.mic-test-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.mic-test-level-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 8px;
+}
+
+.mic-test-track {
+  flex: 1;
+  height: 14px;
+  background: #f0efed;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.mic-test-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--color-primary-light), var(--color-success));
+  transition: width 0.08s ease-out;
+}
+
+.mic-level-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.mic-level-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.mic-level-track {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.diag-chip {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: #f0efed;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.diag-chip-active {
+  background: #eff9ef;
+  border-color: #c9e8c9;
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.event-log {
+  max-height: 120px;
+  overflow-y: auto;
+  background: #201f1e;
+  color: #d6f5d6;
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.event-log .log-line-error {
+  color: #ff8a8a;
+}
+
+.event-log .log-line-warn {
+  color: #ffd27a;
+}
+
+.ai-transcribe-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #eff6f9;
+  border: 1px solid #cfe6ee;
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--color-primary-dark);
+  margin-bottom: 10px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #cfe6ee;
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.transcript-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.text-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.text-btn:hover {
+  background: #f3f2f1;
+  color: var(--color-text);
+}
+
+.hidden { display: none !important; }
+
+
+
+#transcript-area {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+#transcript-area:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.summary-content {
+  min-height: 220px;
+  max-height: 420px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.summary-content .placeholder {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-overlay.hidden { display: none; }
+
+.modal-card {
+  width: 92%;
+  max-width: 460px;
+  background: var(--color-surface);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 14px 0 6px;
+}
+
+.field-label:first-child { margin-top: 0; }
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+select, input[type="password"], input[type="text"] {
+  width: 100%;
+  padding: 11px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: inherit;
+  /* 16px 以上可避免 iOS Safari 在輸入框取得焦點時自動放大畫面 */
+  font-size: 16px;
+  min-height: 44px;
+}
+
+select:focus, input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 8px 0 0;
+}
+
+.modal-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primary-btn {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-btn:hover {
+  background: var(--color-primary-dark);
+}
+
+.primary-btn:disabled {
+  background: #c8c6c4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .app-shell { padding: 16px 12px 40px; }
+  .app-shell { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+  .app-header { padding: 16px 18px; gap: 12px; }
+  .app-header h1 { font-size: 17px; }
+  .subtitle { font-size: 12px; }
+  .header-icon { font-size: 28px; }
+  .fn-btn { font-size: 13px; padding: 12px 14px; }
+  .fn-btn-icon { font-size: 18px; }
+  .modal-card { width: 94%; max-height: 88vh; overflow-y: auto; }
+  .box-title-row { flex-wrap: wrap; gap: 6px; }
+  .mic-level-track { gap: 4px; }
+  .diag-chip { font-size: 10px; padding: 3px 8px; }
+  .primary-btn, .text-btn { min-height: 44px; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <header class="app-header">
+    <div class="header-icon">🚗</div>
+    <div>
+      <h1>車況問診助手</h1>
+      <p class="subtitle">行動裝置版・語音交修問題彙整工具（支援 Android／iOS）</p>
+    </div>
+  </header>
+
+  <!-- 平台相容性提示：iOS 不支援瀏覽器內建即時語音辨識，會由 JS 動態顯示提醒 -->
+  <div id="platform-notice" class="platform-notice hidden"></div>
+
+  <main class="app-main">
+
+    <!-- 功能按鈕區 -->
+    <section class="button-panel">
+      <button id="btn-settings" class="fn-btn">
+        <span class="fn-btn-icon">⚙️</span>
+        <span class="fn-btn-text">
+          功能按鈕1：API金鑰設定與AI模型選擇
+        </span>
+      </button>
+
+      <button id="btn-record" class="fn-btn">
+        <span class="fn-btn-icon">🎙️</span>
+        <span class="fn-btn-text">
+          功能按鈕2：錄製顧客交修問題語音
+        </span>
+      </button>
+
+      <button id="btn-summarize" class="fn-btn">
+        <span class="fn-btn-icon">📝</span>
+        <span class="fn-btn-text">
+          功能按鈕3：語音檔轉交修問題摘要
+        </span>
+      </button>
+
+      <button id="btn-mic-test" class="fn-btn fn-btn-secondary">
+        <span class="fn-btn-icon">🔧</span>
+        <span class="fn-btn-text">
+          麥克風測試（排查沒有聲音輸入問題）
+        </span>
+      </button>
+    </section>
+
+    <!-- 麥克風測試面板 -->
+    <section class="mic-test-panel hidden" id="mic-test-panel">
+      <div class="box-title">麥克風測試</div>
+
+      <label class="field-label" for="mic-device-select">目前偵測到的輸入裝置（請選擇您實際使用的麥克風）</label>
+      <select id="mic-device-select"></select>
+
+      <div class="mic-test-level-wrap">
+        <span class="mic-level-label">即時音量：</span>
+        <div class="mic-test-track">
+          <div class="mic-test-fill" id="mic-test-fill"></div>
+        </div>
+      </div>
+      <p class="hint" id="mic-test-hint">請對麥克風說話，上方音量條應隨聲音大小跳動。若完全沒有反應，代表 Windows 系統層級沒有收到聲音，請檢查 Windows 音效設定中的麥克風音量／裝置選擇。</p>
+
+      <div class="modal-actions">
+        <button id="btn-stop-mic-test" class="primary-btn">停止測試</button>
+      </div>
+    </section>
+
+    <!-- 狀態列 -->
+    <div id="status-bar" class="status-bar">尚未開始。請先完成 API 金鑰設定。</div>
+
+    <!-- 錄音逐字稿區 -->
+    <section class="transcript-box">
+      <div class="box-title-row">
+        <div class="box-title">顧客交修問題語音轉文字（繁體中文）</div>
+        <div class="recording-indicator hidden" id="recording-indicator">
+          <span class="rec-dot"></span>
+          <span id="rec-timer">00:00</span>
+        </div>
+      </div>
+
+      <!-- 語音辨識診斷指示燈：依序亮起代表辨識引擎目前進行到哪個階段，方便排查沒有文字輸出的問題 -->
+      <div class="mic-level-wrap hidden" id="mic-level-wrap">
+        <span class="mic-level-label">辨識狀態：</span>
+        <div class="mic-level-track" id="mic-level-fill"></div>
+      </div>
+
+      <!-- 即時事件記錄：不需開發者工具即可看到辨識引擎的完整事件流程，方便排查問題 -->
+      <div class="event-log hidden" id="event-log"></div>
+
+      <!-- AI 語音辨識模式：錄音結束後顯示轉錄進度 -->
+      <div class="ai-transcribe-status hidden" id="ai-transcribe-status">
+        <span class="spinner"></span>
+        <span>AI 正在轉錄音訊，時間較長時請耐心等候（依錄音長度，可能需要數十秒）...</span>
+      </div>
+
+      <textarea id="transcript-area" placeholder="按下「功能按鈕2」開始錄音，支援服務人員與顧客的連續對話錄音（約1-10分鐘），語音將即時轉換為繁體中文文字顯示於此..."></textarea>
+
+      <div class="transcript-actions">
+        <button id="btn-clear-transcript" class="text-btn">🗑️ 清除文字</button>
+      </div>
+    </section>
+
+    <!-- 交修問題摘要顯示區 -->
+    <section class="summary-box">
+      <div class="box-title">交修問題摘要顯示區</div>
+      <div id="summary-area" class="summary-content">
+        <span class="placeholder">尚無摘要內容。完成錄音並按下「功能按鈕3」後，AI 模型產生的交修問題摘要將顯示於此。</span>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- 設定 Modal -->
+<div id="settings-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>API 金鑰設定與 AI 模型選擇</h2>
+      <button id="close-settings" class="icon-btn">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <label class="field-label">語音辨識引擎</label>
+      <div class="radio-group">
+        <label class="radio-option" id="engine-browser-option">
+          <input type="radio" name="engine" value="browser" checked />
+          <span>瀏覽器內建（免費、即時顯示，準確度普通、無標點）</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="engine" value="ai" />
+          <span>AI 語音辨識（Gemini，準確度更高、自動標點，需錄完才轉換）</span>
+        </label>
+      </div>
+      <p class="hint" id="engine-hint">AI 語音辨識目前僅支援 Google Gemini 模型來源，會在停止錄音後將整段音訊直接從瀏覽器送至 Gemini API 進行轉錄。</p>
+
+      <label class="field-label">AI 模型來源</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="provider" value="gemini" checked />
+          <span>Google Gemini（付費／有免費額度）</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="provider" value="openrouter" />
+          <span>OpenRouter（可選免費模型）</span>
+        </label>
+      </div>
+
+      <label class="field-label" for="model-select">模型名稱</label>
+      <select id="model-select">
+        <!-- 由 JS 依 provider 動態填入 -->
+      </select>
+
+      <label class="field-label" for="api-key-input">API 金鑰</label>
+      <input type="password" id="api-key-input" placeholder="請輸入您的 API Key" />
+      <p class="hint">本頁面為純前端網頁，金鑰僅儲存於您瀏覽器的本機儲存空間（localStorage），API 呼叫由瀏覽器直接發送至 Google／OpenRouter，不會經過任何第三方伺服器。</p>
+
+      <div class="modal-actions">
+        <button id="save-settings" class="primary-btn">儲存設定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 車況問診助手（純網頁版）- 前端邏輯
+// 本版本不需要任何後端伺服器，所有 AI API 呼叫皆由瀏覽器直接發送
+// 至 Google Gemini / OpenRouter，金鑰僅儲存於本機 localStorage。
+// ============================================================
+
+// ----------------------------------------------------------------------
+// AI 提示詞
+// ----------------------------------------------------------------------
+const SUMMARY_SYSTEM_PROMPT = `你是一位資深的汽車維修顧問，專門協助服務廠人員快速掌握顧客交修問題。
+以下文字是由語音辨識產生的逐字稿，內容可能是「服務人員與顧客之間的對話」（雙方交錯詢問與回答），
+也可能只有顧客單方面描述。請你先在心中判讀對話中哪些內容是顧客描述的車輛症狀、
+哪些是服務人員的提問或回應，然後只依據顧客實際提供的資訊，整理成以下結構化摘要，全程使用繁體中文：
+
+【交修問題摘要】
+- 問題症狀：（顧客描述的具體現象，例如異音、警示燈、漏油、抖動等）
+- 發生情境：（何時/何種情況下發生，例如冷車啟動、高速行駛、轉彎時）
+- 可能原因方向：（依症狀列出2-4項可能原因，僅供技師初步判斷參考）
+- 建議檢查項目：（條列式，技師應優先檢查的項目）
+- 緊急程度：（高／中／低，並簡述理由）
+
+注意事項：
+- 逐字稿可能因語音辨識而有錯字、缺漏標點或口語贅字，請自行判斷語意後再整理，不需逐字照抄。
+- 若對話中包含與交修問題無關的閒聊或寒暄，請忽略，只萃取與車輛問題相關的內容。
+- 請保持專業、精簡、條理清楚，不要編造顧客沒有提到的資訊。`;
+
+const TRANSCRIBE_PROMPT = `請將這段音訊逐字轉錄為繁體中文文字，並遵守以下規則：
+1. 自動加入適當的標點符號（，。？！等），使文字通順易讀。
+2. 這段音訊可能是服務人員與顧客之間的對話（雙方交錯說話）。若能分辨出是不同的人在說話，
+   請在每次換人說話時另起一段，並以「服務人員：」或「顧客：」標示；若無法明確分辨，
+   則不需要標示說話者，直接輸出完整逐字稿即可，不要亂猜。
+3. 忽略無意義的語助詞重複（例如「呃呃呃」、口吃重複的贅字），但保留正常語意內容，不要過度精簡或摘要化，
+   這裡需要的是完整逐字稿，不是摘要。
+4. 只輸出逐字稿內容本身，不要加上任何開場白、結語或額外說明文字。
+5. 若音訊中完全沒有可辨識的語音內容，請只回覆：（無法辨識到語音內容）`;
+
+// ----------------------------------------------------------------------
+// 將 API 錯誤轉換成較容易理解的中文說明（對應後端版的 format_api_error）
+// ----------------------------------------------------------------------
+function formatApiError(status, bodyText) {
+  const snippet = (bodyText || "").slice(0, 300);
+  if (status === 429) {
+    return (
+      "AI API 額度已用完（429 錯誤）。這通常是以下其中一種情況：\n" +
+      "① 每分鐘請求次數（RPM）或每分鐘 token 數（TPM）用完 → 通常等待 30-60 秒後即可恢復；\n" +
+      "② 每日請求次數（RPD）用完 → 需等到隔天（美國太平洋時間午夜）額度重置，或改用付費方案；\n" +
+      "③ 音訊轉錄會消耗較多 token，長時間錄音容易較快用完額度。\n" +
+      "可至 Google AI Studio（https://aistudio.google.com）查看目前額度用量，" +
+      "或嘗試切換為 gemini-2.5-flash-lite（每分鐘額度較高）。\n" +
+      `原始錯誤訊息：${snippet}`
+    );
+  }
+  if (status === 404) {
+    return (
+      "找不到指定的模型（404 錯誤），可能是模型名稱已停用或打錯。" +
+      "請至設定確認模型名稱是否為目前有效版本（如 gemini-2.5-flash）。\n" +
+      `原始錯誤訊息：${snippet}`
+    );
+  }
+  if (status === 401 || status === 403) {
+    return `API 金鑰無效或權限不足（${status} 錯誤），請確認金鑰是否正確、是否已啟用對應的 API。\n原始錯誤訊息：${snippet}`;
+  }
+  if (status === 0) {
+    return (
+      "無法連線至 AI 服務（可能是網路問題，或瀏覽器封鎖了跨網域請求 CORS）。" +
+      "請確認網路連線正常；若持續失敗，可嘗試改用本機簡易伺服器開啟本頁面" +
+      "（例如在此資料夾執行 `python -m http.server` 後改用 http://localhost:8000 開啟），" +
+      "而不是直接雙擊 HTML 檔案。"
+    );
+  }
+  return `AI API 呼叫失敗 (${status}): ${snippet}`;
+}
+
+// ----------------------------------------------------------------------
+// 直接從瀏覽器呼叫 Google Gemini API 進行摘要
+// ----------------------------------------------------------------------
+async function callGeminiSummarize(apiKey, model, text) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const payload = {
+    systemInstruction: { parts: [{ text: SUMMARY_SYSTEM_PROMPT }] },
+    contents: [{ role: "user", parts: [{ text }] }],
+    generationConfig: { temperature: 0.3 },
+  };
+  let resp;
+  try {
+    resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    throw new Error(formatApiError(0, e.message));
+  }
+  if (!resp.ok) {
+    const bodyText = await resp.text().catch(() => "");
+    throw new Error(formatApiError(resp.status, bodyText));
+  }
+  const data = await resp.json();
+  const summary = data && data.candidates && data.candidates[0] && data.candidates[0].content
+    && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
+    && data.candidates[0].content.parts[0].text;
+  if (!summary) throw new Error(`Gemini 回傳格式異常: ${JSON.stringify(data).slice(0, 300)}`);
+  return summary;
+}
+
+// ----------------------------------------------------------------------
+// 直接從瀏覽器呼叫 OpenRouter API 進行摘要
+// ----------------------------------------------------------------------
+async function callOpenRouterSummarize(apiKey, model, text) {
+  const url = "https://openrouter.ai/api/v1/chat/completions";
+  const payload = {
+    model,
+    messages: [
+      { role: "system", content: SUMMARY_SYSTEM_PROMPT },
+      { role: "user", content: text },
+    ],
+    temperature: 0.3,
+  };
+  let resp;
+  try {
+    resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": location.href,
+        "X-Title": "車況問診助手",
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    throw new Error(formatApiError(0, e.message));
+  }
+  if (!resp.ok) {
+    const bodyText = await resp.text().catch(() => "");
+    throw new Error(formatApiError(resp.status, bodyText));
+  }
+  const data = await resp.json();
+  const summary = data && data.choices && data.choices[0] && data.choices[0].message
+    && data.choices[0].message.content;
+  if (!summary) throw new Error(`OpenRouter 回傳格式異常: ${JSON.stringify(data).slice(0, 300)}`);
+  return summary;
+}
+
+// ----------------------------------------------------------------------
+// 直接從瀏覽器呼叫 Google Gemini API 進行音訊逐字轉錄
+// ----------------------------------------------------------------------
+async function callGeminiTranscribe(apiKey, model, audioBase64, mimeType) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const payload = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { text: TRANSCRIBE_PROMPT },
+          { inline_data: { mime_type: mimeType, data: audioBase64 } },
+        ],
+      },
+    ],
+    generationConfig: { temperature: 0.2 },
+  };
+  let resp;
+  try {
+    resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    throw new Error(formatApiError(0, e.message));
+  }
+  if (!resp.ok) {
+    const bodyText = await resp.text().catch(() => "");
+    throw new Error(formatApiError(resp.status, bodyText));
+  }
+  const data = await resp.json();
+  const transcript = data && data.candidates && data.candidates[0] && data.candidates[0].content
+    && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
+    && data.candidates[0].content.parts[0].text;
+  if (!transcript) throw new Error(`Gemini 回傳格式異常: ${JSON.stringify(data).slice(0, 300)}`);
+  return transcript;
+}
+
+const MODEL_OPTIONS = {
+  gemini: [
+    { value: "gemini-2.5-flash", label: "gemini-2.5-flash（推薦，支援音訊）" },
+    { value: "gemini-2.5-flash-lite", label: "gemini-2.5-flash-lite（速度快，每分鐘額度較高）" },
+    { value: "gemini-3.5-flash", label: "gemini-3.5-flash（Google最新模型，額度／定價可能不同）" },
+  ],
+  openrouter: [
+    { value: "meta-llama/llama-3.1-8b-instruct:free", label: "Llama 3.1 8B（免費）" },
+    { value: "google/gemma-2-9b-it:free", label: "Gemma 2 9B（免費）" },
+    { value: "mistralai/mistral-7b-instruct:free", label: "Mistral 7B（免費）" },
+  ],
+};
+
+const els = {
+  btnSettings: document.getElementById("btn-settings"),
+  btnRecord: document.getElementById("btn-record"),
+  btnSummarize: document.getElementById("btn-summarize"),
+  statusBar: document.getElementById("status-bar"),
+  transcriptArea: document.getElementById("transcript-area"),
+  summaryArea: document.getElementById("summary-area"),
+  recordingIndicator: document.getElementById("recording-indicator"),
+  recTimer: document.getElementById("rec-timer"),
+  micLevelWrap: document.getElementById("mic-level-wrap"),
+  micLevelFill: document.getElementById("mic-level-fill"),
+  eventLog: document.getElementById("event-log"),
+  btnClearTranscript: document.getElementById("btn-clear-transcript"),
+
+  btnMicTest: document.getElementById("btn-mic-test"),
+  micTestPanel: document.getElementById("mic-test-panel"),
+  micDeviceSelect: document.getElementById("mic-device-select"),
+  micTestFill: document.getElementById("mic-test-fill"),
+  micTestHint: document.getElementById("mic-test-hint"),
+  btnStopMicTest: document.getElementById("btn-stop-mic-test"),
+
+  modal: document.getElementById("settings-modal"),
+  closeSettings: document.getElementById("close-settings"),
+  saveSettings: document.getElementById("save-settings"),
+  modelSelect: document.getElementById("model-select"),
+  apiKeyInput: document.getElementById("api-key-input"),
+  providerRadios: document.querySelectorAll('input[name="provider"]'),
+  engineRadios: document.querySelectorAll('input[name="engine"]'),
+  engineHint: document.getElementById("engine-hint"),
+  engineBrowserOption: document.getElementById("engine-browser-option"),
+  platformNotice: document.getElementById("platform-notice"),
+
+  aiTranscribeStatus: document.getElementById("ai-transcribe-status"),
+};
+
+let state = {
+  provider: "gemini",
+  model: "gemini-2.5-flash",
+  apiKey: "",
+  engine: "browser", // "browser" (Web Speech API，免費即時) 或 "ai"（Gemini 音訊轉錄，較準確含標點）
+  recognizing: false,
+};
+
+// ------------------------------------------------------------
+// 設定管理 (localStorage)
+// ------------------------------------------------------------
+function loadSettings() {
+  const saved = localStorage.getItem("car_assistant_settings");
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+    } catch (e) { /* ignore */ }
+  }
+  // Google 已於 2026/6/1 關閉 gemini-2.0-flash，gemini-1.5-flash 也已停用，
+  // 若偵測到先前設定使用這些已停用的模型，自動遷移為目前有效的 gemini-2.5-flash
+  const DEPRECATED_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite"];
+  if (state.provider === "gemini" && DEPRECATED_MODELS.includes(state.model)) {
+    state.model = "gemini-2.5-flash";
+    saveSettingsToStorage();
+  }
+  updateStatus();
+}
+
+function saveSettingsToStorage() {
+  localStorage.setItem("car_assistant_settings", JSON.stringify({
+    provider: state.provider,
+    model: state.model,
+    apiKey: state.apiKey,
+    engine: state.engine,
+  }));
+}
+
+function populateModelOptions(provider) {
+  els.modelSelect.innerHTML = "";
+  MODEL_OPTIONS[provider].forEach(opt => {
+    const el = document.createElement("option");
+    el.value = opt.value;
+    el.textContent = opt.label;
+    els.modelSelect.appendChild(el);
+  });
+}
+
+function openSettingsModal() {
+  els.providerRadios.forEach(r => { r.checked = (r.value === state.provider); });
+  els.engineRadios.forEach(r => { r.checked = (r.value === state.engine); });
+  populateModelOptions(state.provider);
+  els.modelSelect.value = state.model;
+  els.apiKeyInput.value = state.apiKey;
+  updateEngineHint();
+  els.modal.classList.remove("hidden");
+}
+
+function closeSettingsModal() {
+  els.modal.classList.add("hidden");
+}
+
+function updateEngineHint() {
+  const engineEl = document.querySelector('input[name="engine"]:checked');
+  const providerEl = document.querySelector('input[name="provider"]:checked');
+  if (engineEl && engineEl.value === "ai" && providerEl && providerEl.value !== "gemini") {
+    els.engineHint.textContent = "⚠️ AI 語音辨識目前僅支援 Google Gemini 模型來源，請將上方「AI 模型來源」切換為 Google Gemini 才能使用此模式。";
+  } else {
+    els.engineHint.textContent = "AI 語音辨識目前僅支援 Google Gemini 模型來源，會在停止錄音後將整段音訊送至 AI 進行轉錄。";
+  }
+}
+
+els.btnSettings.addEventListener("click", openSettingsModal);
+els.closeSettings.addEventListener("click", closeSettingsModal);
+els.modal.addEventListener("click", (e) => {
+  if (e.target === els.modal) closeSettingsModal();
+});
+
+els.providerRadios.forEach(r => {
+  r.addEventListener("change", (e) => {
+    populateModelOptions(e.target.value);
+    updateEngineHint();
+  });
+});
+
+els.engineRadios.forEach(r => {
+  r.addEventListener("change", updateEngineHint);
+});
+
+els.saveSettings.addEventListener("click", () => {
+  const providerEl = document.querySelector('input[name="provider"]:checked');
+  const engineEl = document.querySelector('input[name="engine"]:checked');
+  state.provider = providerEl.value;
+  state.model = els.modelSelect.value;
+  state.apiKey = els.apiKeyInput.value.trim();
+  state.engine = engineEl.value;
+  if (state.engine === "ai" && state.provider !== "gemini") {
+    setStatus("AI 語音辨識僅支援 Google Gemini，已自動切換回瀏覽器內建語音辨識。", "error");
+    state.engine = "browser";
+  }
+  saveSettingsToStorage();
+  closeSettingsModal();
+  updateStatus();
+});
+
+function updateStatus() {
+  if (!state.apiKey) {
+    setStatus("尚未設定 API 金鑰，請點選「功能按鈕1」進行設定。", "");
+  } else {
+    const engineLabel = state.engine === "ai" ? "AI 語音辨識" : "瀏覽器內建語音辨識";
+    setStatus(`目前使用模型來源：${state.provider === "gemini" ? "Google Gemini" : "OpenRouter"}（${state.model}）｜辨識引擎：${engineLabel}`, "success");
+  }
+}
+
+function setStatus(text, type) {
+  els.statusBar.textContent = text;
+  els.statusBar.className = "status-bar" + (type ? " " + type : "");
+}
+
+// ------------------------------------------------------------
+// 錄音 + 語音轉繁體中文文字 (Web Speech API)
+// ------------------------------------------------------------
+let recognition = null;
+let finalTranscript = "";
+let recTimerInterval = null;
+let recStartTime = null;
+let noSpeechCount = 0;
+let restartTimeoutId = null;
+let recognitionWatchdogId = null;
+let recognitionWatchdogFired = false;
+let lastSpeechEndAt = null;
+let pendingGapMs = null;
+let appliedPunctuationThisSession = false;
+
+// ------------------------------------------------------------
+// 即時事件記錄面板（不需開發者工具即可查看）
+// ------------------------------------------------------------
+function addLog(text, level) {
+  console.log("[語音辨識]", text);
+  els.eventLog.classList.remove("hidden");
+  const line = document.createElement("div");
+  const t = new Date().toLocaleTimeString("zh-TW", { hour12: false });
+  line.textContent = `[${t}] ${text}`;
+  if (level === "error") line.className = "log-line-error";
+  else if (level === "warn") line.className = "log-line-warn";
+  els.eventLog.appendChild(line);
+  els.eventLog.scrollTop = els.eventLog.scrollHeight;
+}
+
+function clearLog() {
+  els.eventLog.innerHTML = "";
+  els.eventLog.classList.add("hidden");
+}
+
+// ------------------------------------------------------------
+// 合併辨識片段時，移除因「重啟辨識引擎」造成的銜接處重複文字
+// 例如上一段結尾是「...我進去」，下一段開頭又抓到「進去...」，
+// 會自動偵測重疊部分並去除，避免長對話逐字稿出現重複字詞。
+// ------------------------------------------------------------
+function mergeAppend(existing, addition) {
+  if (!addition) return existing;
+  if (!existing) return addition;
+  const maxOverlap = Math.min(existing.length, addition.length, 20);
+  for (let len = maxOverlap; len > 0; len--) {
+    if (existing.slice(-len) === addition.slice(0, len)) {
+      return existing + addition.slice(len);
+    }
+  }
+  return existing + addition;
+}
+
+// ------------------------------------------------------------
+// 依「停頓長度」自動決定要插入的標點符號。
+// 瀏覽器語音辨識引擎本身不會產生標點，這裡用片段之間的間隔時間
+// 作為簡易判斷依據：停頓越長，越可能是句子或話輪的結束。
+//   < 400ms  → 視為引擎重啟造成的人為間隙，不加標點（避免斷句過碎）
+//   400ms - 1200ms → 視為語氣停頓，加「，」
+//   > 1200ms → 視為句子或換人說話，加「。」
+// ------------------------------------------------------------
+function decideSeparator(gapMs) {
+  if (gapMs === null) return "";
+  if (gapMs < 400) return "";
+  if (gapMs < 1200) return "，";
+  return "。";
+}
+
+const PUNCTUATION_END_RE = /[。，！？、,.!?]$/;
+
+function initRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    setStatus("此瀏覽器不支援語音辨識功能，請使用 Google Chrome 開啟本頁面。", "error");
+    return null;
+  }
+  const rec = new SpeechRecognition();
+  rec.lang = "zh-TW";
+  // 注意：continuous=true 在部分 Chrome / Windows 組合下，容易在偵測到語音後卡住、
+  // 不觸發 onresult 也不觸發 onerror。改用單句模式（false），每句辨識完就結束，
+  // 由 onend 自動重啟下一句，穩定性較高。
+  rec.continuous = false;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+
+  rec.onstart = () => {
+    addLog("onstart：辨識引擎已啟動");
+    setDiagStage("started");
+    recognitionWatchdogFired = true;
+    clearTimeout(recognitionWatchdogId);
+    pendingGapMs = lastSpeechEndAt !== null ? Date.now() - lastSpeechEndAt : null;
+    appliedPunctuationThisSession = false;
+  };
+
+  rec.onaudiostart = () => {
+    addLog("onaudiostart：已取得麥克風音訊串流");
+    setDiagStage("audio");
+  };
+
+  rec.onsoundstart = () => {
+    addLog("onsoundstart：偵測到聲音訊號");
+    setDiagStage("sound");
+  };
+
+  rec.onspeechstart = () => {
+    addLog("onspeechstart：判定為語音，開始辨識");
+    setDiagStage("speech");
+  };
+
+  rec.onspeechend = () => {
+    addLog("onspeechend：語音片段結束，等待辨識結果");
+    lastSpeechEndAt = Date.now();
+  };
+
+  rec.onresult = (event) => {
+    let interim = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        if (!appliedPunctuationThisSession) {
+          const sep = decideSeparator(pendingGapMs);
+          if (sep && finalTranscript && !PUNCTUATION_END_RE.test(finalTranscript)) {
+            finalTranscript += sep;
+          }
+          appliedPunctuationThisSession = true;
+        }
+        finalTranscript = mergeAppend(finalTranscript, transcript);
+        noSpeechCount = 0;
+      } else {
+        interim += transcript;
+      }
+    }
+    addLog(`onresult：辨識到文字 "${finalTranscript.slice(-30)}${interim ? " (暫定: " + interim + ")" : ""}"`);
+    els.transcriptArea.value = finalTranscript + interim;
+    els.transcriptArea.scrollTop = els.transcriptArea.scrollHeight;
+  };
+
+  rec.onnomatch = () => {
+    addLog("onnomatch：有收到語音但無法辨識出任何內容", "warn");
+  };
+
+  rec.onerror = (event) => {
+    if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+      addLog("onerror：麥克風權限被拒絕", "error");
+      setStatus(
+        "麥克風權限被拒絕。請點擊網址列左側的鎖頭／麥克風圖示，允許此網站使用麥克風；" +
+        "若在 Windows 11，也請確認「設定 > 隱私權與安全性 > 麥克風」已開啟「允許應用程式存取您的麥克風」。",
+        "error"
+      );
+      stopRecordingBrowser();
+    } else if (event.error === "no-speech") {
+      noSpeechCount++;
+      addLog(`onerror：no-speech（第 ${noSpeechCount} 次，Chrome 判定此片段未偵測到有效語音）`, "warn");
+      if (noSpeechCount >= 4) {
+        setStatus("已連續多次沒有偵測到有效語音，請確認麥克風輸入是否正常、靠近麥克風並清楚地說話。", "error");
+      }
+    } else if (event.error === "audio-capture") {
+      addLog("onerror：audio-capture，找不到麥克風裝置", "error");
+      setStatus("找不到可用的麥克風裝置，請確認電腦已連接麥克風，並在 Windows 音效設定中選為預設輸入裝置。", "error");
+      stopRecordingBrowser();
+    } else if (event.error === "network") {
+      addLog("onerror：network，無法連線至 Google 語音辨識服務", "error");
+      setStatus("語音辨識服務連線失敗（network），Chrome 語音辨識需連上 Google 的雲端服務，請確認網路／防火牆／VPN 未阻擋。", "error");
+    } else if (event.error === "aborted") {
+      addLog("onerror：aborted（通常是手動停止或重啟造成，可忽略）");
+    } else {
+      addLog(`onerror：${event.error}`, "error");
+      setStatus(`語音辨識發生錯誤：${event.error}`, "error");
+    }
+  };
+
+  rec.onend = () => {
+    addLog("onend：辨識工作階段結束");
+    if (state.recognizing) {
+      // 單句模式下，每句辨識完都會觸發 onend，這裡自動重啟下一句。
+      // 加入短暫延遲再重啟，可降低銜接處抓取失敗或重複的機率，
+      // 對長時間（1-10 分鐘）連續對話錄音的穩定度較好。
+      restartTimeoutId = setTimeout(() => {
+        if (!state.recognizing) return;
+        try {
+          rec.start();
+        } catch (e) {
+          addLog("重新啟動辨識失敗，將於 0.5 秒後重試：" + e.message, "warn");
+          restartTimeoutId = setTimeout(() => {
+            if (!state.recognizing) return;
+            try { rec.start(); } catch (e2) {
+              addLog("重試仍失敗：" + e2.message, "error");
+              setStatus("語音辨識重啟失敗，請停止錄音後重新開始。", "error");
+            }
+          }, 500);
+        }
+      }, 200);
+    } else {
+      // 使用者已按下停止：待最後一段結果處理完畢後，補上結尾句號方便閱讀
+      if (finalTranscript && !PUNCTUATION_END_RE.test(finalTranscript)) {
+        finalTranscript += "。";
+      }
+      els.transcriptArea.value = finalTranscript;
+    }
+  };
+
+  return rec;
+}
+
+// ------------------------------------------------------------
+// 辨識階段指示燈（依語音辨識引擎自身事件顯示，不額外搶用麥克風）
+// 順序：啟動 → 取得音訊 → 偵測到聲音 → 判定為語音
+// ------------------------------------------------------------
+const DIAG_STAGES = ["started", "audio", "sound", "speech"];
+const DIAG_LABELS = {
+  started: "① 引擎已啟動",
+  audio: "② 已取得音訊",
+  sound: "③ 偵測到聲音",
+  speech: "④ 判定為語音",
+};
+
+function resetDiagStages() {
+  els.micLevelWrap.classList.remove("hidden");
+  els.micLevelFill.innerHTML = "";
+  DIAG_STAGES.forEach(key => {
+    const chip = document.createElement("span");
+    chip.className = "diag-chip";
+    chip.id = `diag-${key}`;
+    chip.textContent = DIAG_LABELS[key];
+    els.micLevelFill.appendChild(chip);
+  });
+}
+
+function setDiagStage(key) {
+  const chip = document.getElementById(`diag-${key}`);
+  if (chip) chip.classList.add("diag-chip-active");
+}
+
+function hideDiagStages() {
+  els.micLevelWrap.classList.add("hidden");
+}
+
+// ------------------------------------------------------------
+// 錄音計時器
+// ------------------------------------------------------------
+function startRecTimer() {
+  recStartTime = Date.now();
+  els.recordingIndicator.classList.remove("hidden");
+  recTimerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - recStartTime) / 1000);
+    const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+    const ss = String(elapsed % 60).padStart(2, "0");
+    els.recTimer.textContent = `${mm}:${ss}`;
+
+    // 長時間對話錄音的溫和提醒，不會自動停止錄音
+    if (elapsed === 600) {
+      setStatus("錄音已進行 10 分鐘，仍持續錄音辨識中，如對話已結束可點擊「功能按鈕2」停止。", "success");
+    }
+  }, 500);
+}
+
+function stopRecTimer() {
+  if (recTimerInterval) clearInterval(recTimerInterval);
+  recTimerInterval = null;
+  els.recordingIndicator.classList.add("hidden");
+  els.recTimer.textContent = "00:00";
+}
+
+function startRecordingBrowser() {
+  stopMicTest();
+  els.micTestPanel.classList.add("hidden");
+  finalTranscript = els.transcriptArea.value ? els.transcriptArea.value + "\n" : "";
+  noSpeechCount = 0;
+  lastSpeechEndAt = null;
+  pendingGapMs = null;
+  appliedPunctuationThisSession = false;
+  clearLog();
+  recognition = initRecognition();
+  if (!recognition) return;
+
+  resetDiagStages();
+
+  try {
+    recognition.start();
+  } catch (e) {
+    setStatus("無法啟動錄音，請重新整理頁面後再試。", "error");
+    hideDiagStages();
+    return;
+  }
+
+  state.recognizing = true;
+  els.btnRecord.classList.add("active");
+  els.btnRecord.querySelector(".fn-btn-text").textContent = "錄音中... 點擊停止錄音";
+  els.btnRecord.querySelector(".fn-btn-icon").textContent = "⏹️";
+  setStatus("正在錄音並即時轉換為繁體中文文字，支援連續對話錄音，請雙方直接對話即可，中途停頓不會中斷。", "");
+
+  startRecTimer();
+
+  // 安全監看：某些非標準來源（如 Android 的 content://）呼叫 start() 後，
+  // 可能既不觸發 onstart 也不觸發 onerror，畫面會卡在「錄音中」但實際上沒有作用。
+  // 若 4 秒內完全沒有任何辨識引擎事件，主動提示並建議改用 https 網址。
+  recognitionWatchdogFired = false;
+  clearTimeout(recognitionWatchdogId);
+  recognitionWatchdogId = setTimeout(() => {
+    if (state.recognizing && !recognitionWatchdogFired) {
+      addLog("watchdog：4秒內未收到任何辨識引擎事件，可能是麥克風權限未正確取得", "warn");
+      setStatus(
+        "錄音似乎沒有反應（4秒內未偵測到任何辨識引擎事件），這通常代表目前的開啟方式無法取得麥克風權限。" +
+        "建議改用 https 網址開啟本頁面會更穩定（詳見說明文件）。您也可以先按一次「停止錄音」再重試看看。",
+        "error"
+      );
+    }
+  }, 4000);
+}
+
+function stopRecordingBrowser() {
+  state.recognizing = false;
+  if (restartTimeoutId) {
+    clearTimeout(restartTimeoutId);
+    restartTimeoutId = null;
+  }
+  clearTimeout(recognitionWatchdogId);
+  recognitionWatchdogFired = true;
+  if (recognition) {
+    recognition.stop();
+  }
+  els.btnRecord.classList.remove("active");
+  els.btnRecord.querySelector(".fn-btn-text").textContent = "功能按鈕2：錄製顧客交修問題語音";
+  els.btnRecord.querySelector(".fn-btn-icon").textContent = "🎙️";
+  setStatus("錄音已結束，如需產生摘要請點選「功能按鈕3」。", "success");
+
+  stopRecTimer();
+  hideDiagStages();
+}
+
+// ------------------------------------------------------------
+// AI 語音辨識模式（MediaRecorder 錄下完整音訊，停止錄音後
+// 送到後端由 Gemini 直接讀取音訊進行逐字轉錄，準確度較高且含標點）
+// ------------------------------------------------------------
+let mediaRecorder = null;
+let mediaRecorderStream = null;
+let audioChunks = [];
+
+function pickAudioMimeType() {
+  const candidates = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/ogg;codecs=opus",
+    "audio/mp4",
+  ];
+  for (const type of candidates) {
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported(type)) return type;
+  }
+  return "";
+}
+
+async function startRecordingAI() {
+  stopMicTest();
+  els.micTestPanel.classList.add("hidden");
+  els.aiTranscribeStatus.classList.add("hidden");
+
+  if (!window.MediaRecorder) {
+    setStatus("此瀏覽器不支援錄音功能（MediaRecorder），請改用瀏覽器內建語音辨識模式。", "error");
+    return;
+  }
+
+  try {
+    mediaRecorderStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (e) {
+    setStatus(`無法開啟麥克風：${e.message}。請確認已允許麥克風權限。`, "error");
+    return;
+  }
+
+  const mimeType = pickAudioMimeType();
+  audioChunks = [];
+
+  try {
+    mediaRecorder = mimeType
+      ? new MediaRecorder(mediaRecorderStream, { mimeType })
+      : new MediaRecorder(mediaRecorderStream);
+  } catch (e) {
+    setStatus(`無法啟動錄音器：${e.message}`, "error");
+    mediaRecorderStream.getTracks().forEach(t => t.stop());
+    return;
+  }
+
+  mediaRecorder.ondataavailable = (e) => {
+    if (e.data && e.data.size > 0) audioChunks.push(e.data);
+  };
+
+  mediaRecorder.onstop = handleAIRecordingStop;
+
+  mediaRecorder.start();
+  state.recognizing = true;
+  els.btnRecord.classList.add("active");
+  els.btnRecord.querySelector(".fn-btn-text").textContent = "錄音中（AI辨識模式）... 點擊停止錄音";
+  els.btnRecord.querySelector(".fn-btn-icon").textContent = "⏹️";
+  setStatus("正在錄音（AI 語音辨識模式），支援連續對話錄音，停止錄音後將自動送出進行轉錄。", "");
+  startRecTimer();
+}
+
+function stopRecordingAI() {
+  state.recognizing = false;
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
+  }
+  if (mediaRecorderStream) {
+    mediaRecorderStream.getTracks().forEach(t => t.stop());
+    mediaRecorderStream = null;
+  }
+  els.btnRecord.classList.remove("active");
+  els.btnRecord.querySelector(".fn-btn-text").textContent = "功能按鈕2：錄製顧客交修問題語音";
+  els.btnRecord.querySelector(".fn-btn-icon").textContent = "🎙️";
+  stopRecTimer();
+}
+
+async function handleAIRecordingStop() {
+  if (audioChunks.length === 0) {
+    setStatus("沒有錄到任何音訊，請重新錄音。", "error");
+    return;
+  }
+  if (!state.apiKey) {
+    setStatus("尚未設定 API 金鑰，請點選「功能按鈕1」進行設定。", "error");
+    openSettingsModal();
+    return;
+  }
+  if (state.provider !== "gemini") {
+    setStatus("AI 語音辨識僅支援 Google Gemini，請至設定切換模型來源。", "error");
+    return;
+  }
+
+  const rawMimeType = mediaRecorder.mimeType || "audio/webm";
+  // 移除 codecs 參數（例如 "audio/webm;codecs=opus" → "audio/webm"），
+  // Gemini API 的 mime_type 欄位僅需基本格式，避免額外參數導致辨識失敗
+  const mimeType = rawMimeType.split(";")[0].trim();
+  const blob = new Blob(audioChunks, { type: mimeType });
+  audioChunks = [];
+
+  els.aiTranscribeStatus.classList.remove("hidden");
+  els.btnSummarize.disabled = true;
+  els.btnRecord.disabled = true;
+  setStatus("錄音已結束，正在將音訊直接傳送至 Gemini 進行逐字轉錄...", "");
+
+  try {
+    const audioBase64 = await blobToBase64(blob);
+    const text = await callGeminiTranscribe(state.apiKey, state.model, audioBase64, mimeType);
+    const prefix = els.transcriptArea.value.trim() ? els.transcriptArea.value.trim() + "\n" : "";
+    els.transcriptArea.value = prefix + text;
+    setStatus("AI 語音轉錄完成，如需產生摘要請點選「功能按鈕3」。", "success");
+  } catch (e) {
+    setStatus(`AI 轉錄失敗：${e.message}`, "error");
+  } finally {
+    els.aiTranscribeStatus.classList.add("hidden");
+    els.btnSummarize.disabled = false;
+    els.btnRecord.disabled = false;
+  }
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // reader.result 格式為 "data:audio/webm;base64,XXXX"，只取逗號後的純 base64 內容
+      const base64 = reader.result.split(",")[1] || "";
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// ------------------------------------------------------------
+// 錄音按鈕：依目前選擇的辨識引擎，分派到瀏覽器內建或 AI 模式
+// ------------------------------------------------------------
+els.btnRecord.addEventListener("click", () => {
+  if (state.engine === "ai") {
+    if (state.recognizing) {
+      stopRecordingAI();
+    } else {
+      startRecordingAI();
+    }
+  } else {
+    if (state.recognizing) {
+      stopRecordingBrowser();
+    } else {
+      startRecordingBrowser();
+    }
+  }
+});
+
+// ------------------------------------------------------------
+// 通用停止錄音（依目前引擎分派），供麥克風測試／清除文字／
+// 產生摘要等其他功能在錄音中被觸發時使用
+// ------------------------------------------------------------
+function stopRecording() {
+  if (state.engine === "ai") {
+    stopRecordingAI();
+  } else {
+    stopRecordingBrowser();
+  }
+}
+
+// ------------------------------------------------------------
+// 麥克風測試面板（獨立於語音辨識，用來確認 Windows / Chrome
+// 實際收到的原始音訊音量，排查「有畫面反應但辨識不到語音」的問題）
+// ------------------------------------------------------------
+let micTestStream = null;
+let micTestAudioCtx = null;
+let micTestAnalyser = null;
+let micTestRafId = null;
+
+async function populateMicDeviceList() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const inputs = devices.filter(d => d.kind === "audioinput");
+    els.micDeviceSelect.innerHTML = "";
+    if (inputs.length === 0) {
+      const opt = document.createElement("option");
+      opt.textContent = "找不到任何音訊輸入裝置";
+      els.micDeviceSelect.appendChild(opt);
+      return;
+    }
+    inputs.forEach((d, idx) => {
+      const opt = document.createElement("option");
+      opt.value = d.deviceId;
+      opt.textContent = d.label || `麥克風裝置 ${idx + 1}`;
+      els.micDeviceSelect.appendChild(opt);
+    });
+  } catch (e) {
+    els.micDeviceSelect.innerHTML = '<option>無法取得裝置清單</option>';
+  }
+}
+
+async function startMicTest(deviceId) {
+  stopMicTest();
+  try {
+    const constraints = deviceId
+      ? { audio: { deviceId: { exact: deviceId } } }
+      : { audio: true };
+    micTestStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+    // 取得裝置授權後，裝置的 label 才會顯示出來，重新整理一次清單
+    await populateMicDeviceList();
+    if (deviceId) els.micDeviceSelect.value = deviceId;
+
+    micTestAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = micTestAudioCtx.createMediaStreamSource(micTestStream);
+    micTestAnalyser = micTestAudioCtx.createAnalyser();
+    micTestAnalyser.fftSize = 512;
+    source.connect(micTestAnalyser);
+
+    const dataArray = new Uint8Array(micTestAnalyser.frequencyBinCount);
+    let peak = 0;
+
+    const tick = () => {
+      micTestAnalyser.getByteFrequencyData(dataArray);
+      const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      const pct = Math.min(100, Math.round((avg / 90) * 100));
+      els.micTestFill.style.width = pct + "%";
+      if (pct > peak) peak = pct;
+
+      if (peak < 3) {
+        els.micTestHint.textContent = "尚未偵測到任何聲音，請對麥克風說話試試看。若持續無反應，代表 Windows 沒有收到此裝置的聲音訊號。";
+      } else {
+        els.micTestHint.textContent = `✅ 已偵測到聲音訊號（峰值音量約 ${peak}%）。若這裡有反應，但功能按鈕2 錄音時辨識不到文字，代表問題出在語音辨識服務本身，而非麥克風硬體。`;
+      }
+      micTestRafId = requestAnimationFrame(tick);
+    };
+    tick();
+  } catch (e) {
+    els.micTestHint.textContent = `無法開啟麥克風：${e.message}。請確認瀏覽器已允許麥克風權限，且裝置未被其他程式（如 Teams、Zoom）獨佔使用中。`;
+  }
+}
+
+function stopMicTest() {
+  if (micTestRafId) cancelAnimationFrame(micTestRafId);
+  micTestRafId = null;
+  if (micTestStream) {
+    micTestStream.getTracks().forEach(track => track.stop());
+    micTestStream = null;
+  }
+  if (micTestAudioCtx) {
+    micTestAudioCtx.close().catch(() => {});
+    micTestAudioCtx = null;
+  }
+  els.micTestFill.style.width = "0%";
+}
+
+els.btnMicTest.addEventListener("click", async () => {
+  if (state.recognizing) stopRecording();
+  els.micTestPanel.classList.remove("hidden");
+  await populateMicDeviceList();
+  startMicTest(els.micDeviceSelect.value || null);
+});
+
+els.micDeviceSelect.addEventListener("change", () => {
+  startMicTest(els.micDeviceSelect.value || null);
+});
+
+els.btnStopMicTest.addEventListener("click", () => {
+  stopMicTest();
+  els.micTestPanel.classList.add("hidden");
+});
+
+els.btnClearTranscript.addEventListener("click", () => {
+  if (state.recognizing) {
+    stopRecording();
+  }
+  els.transcriptArea.value = "";
+  els.summaryArea.innerHTML = '<span class="placeholder">尚無摘要內容。完成錄音並按下「功能按鈕3」後，AI 模型產生的交修問題摘要將顯示於此。</span>';
+  setStatus("已清除文字內容。", "");
+});
+
+// ------------------------------------------------------------
+// 呼叫後端 AI 摘要
+// ------------------------------------------------------------
+els.btnSummarize.addEventListener("click", async () => {
+  const text = els.transcriptArea.value.trim();
+
+  if (state.recognizing) {
+    stopRecording();
+  }
+
+  if (!text) {
+    setStatus("目前沒有可供摘要的文字，請先錄音（功能按鈕2）。", "error");
+    return;
+  }
+  if (!state.apiKey) {
+    setStatus("尚未設定 API 金鑰，請點選「功能按鈕1」進行設定。", "error");
+    openSettingsModal();
+    return;
+  }
+
+  els.summaryArea.innerHTML = '<span class="placeholder">AI 模型摘要產生中，請稍候...</span>';
+  els.btnSummarize.disabled = true;
+  setStatus("正在將交修問題文字直接傳送至 AI 模型進行摘要...", "");
+
+  try {
+    let summary;
+    if (state.provider === "gemini") {
+      summary = await callGeminiSummarize(state.apiKey, state.model, text);
+    } else if (state.provider === "openrouter") {
+      summary = await callOpenRouterSummarize(state.apiKey, state.model, text);
+    } else {
+      throw new Error(`不支援的 AI 模型來源: ${state.provider}`);
+    }
+    els.summaryArea.textContent = summary;
+    setStatus("交修問題摘要已產生完成。", "success");
+  } catch (e) {
+    els.summaryArea.innerHTML = `<span class="placeholder">摘要產生失敗：${e.message}</span>`;
+    setStatus(e.message, "error");
+  } finally {
+    els.btnSummarize.disabled = false;
+  }
+});
+
+// ------------------------------------------------------------
+// 初始化
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+// 行動裝置平台偵測
+// ------------------------------------------------------------
+function isIOSDevice() {
+  const ua = navigator.userAgent;
+  const isIOSUA = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  // iPadOS 13+ 預設會偽裝成 macOS 的 User-Agent，改用觸控點數量輔助判斷
+  const isIPadOS = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  return isIOSUA || isIPadOS;
+}
+
+function showPlatformNotice(message) {
+  if (!els.platformNotice) return;
+  els.platformNotice.textContent = message;
+  els.platformNotice.classList.remove("hidden");
+}
+
+function checkBrowserSupport() {
+  const hasSpeech = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const hasMediaRecorder = !!window.MediaRecorder;
+  const hasGetUserMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  const iOS = isIOSDevice();
+  const protocol = location.protocol;
+
+  // 明確已知安全的來源：https、localhost、以及非 iOS 裝置上的 file://
+  const isKnownSecure = protocol === "https:" ||
+    location.hostname === "127.0.0.1" || location.hostname === "localhost" ||
+    (protocol === "file:" && !iOS);
+
+  // Android 上用「檔案管理員」開啟本機檔案時，Chrome 網址列會顯示 content:// 開頭，
+  // 這種來源是否能取得麥克風權限並不一致（依裝置／Chrome版本而定），
+  // 因此這裡「不」預先鎖住錄音按鈕，而是讓使用者可以嘗試，若真的被拒絕，
+  // 會由瀏覽器原生的權限錯誤訊息告知，並在下方提示改用 https 網址最穩定。
+  const isAmbiguousProtocol = !isKnownSecure && protocol !== "http:";
+
+  if (iOS && !hasSpeech) {
+    // iOS 的 Safari／Chrome／所有瀏覽器底層皆為 WebKit，完全不支援 Web Speech API，
+    // 自動切換為「AI 語音辨識」模式，並隱藏「瀏覽器內建」選項避免使用者選到無效的模式。
+    state.engine = "ai";
+    if (els.engineBrowserOption) els.engineBrowserOption.classList.add("hidden");
+    showPlatformNotice(
+      "📱 偵測到您使用 iOS 裝置（iPhone/iPad）。iOS 系統不支援瀏覽器即時語音辨識，" +
+      "已自動切換為「AI 語音辨識」模式（錄完整段對話後，才送至 Gemini 進行轉錄）。" +
+      "請至「功能按鈕1」設定 Gemini API 金鑰後即可使用。"
+    );
+  } else if (!hasSpeech && hasMediaRecorder) {
+    // 非 iOS，但瀏覽器本身不支援 Web Speech API（例如部分 Firefox、舊版瀏覽器）
+    state.engine = "ai";
+    if (els.engineBrowserOption) els.engineBrowserOption.classList.add("hidden");
+    showPlatformNotice("此瀏覽器不支援即時語音辨識，已自動切換為「AI 語音辨識」模式。建議改用 Chrome 瀏覽器以獲得完整功能。");
+  }
+
+  if (!hasSpeech && !hasMediaRecorder && !hasGetUserMedia) {
+    setStatus("此瀏覽器不支援語音辨識或錄音功能，請改用 Chrome 瀏覽器開啟本頁面。", "error");
+    els.btnRecord.disabled = true;
+    return false;
+  }
+
+  if (protocol === "http:") {
+    // http:（非 localhost）是明確不安全的來源，瀏覽器一定會擋下麥克風權限，直接鎖住並說明
+    setStatus("目前網址為不安全的 http 連線，瀏覽器會封鎖麥克風權限，請改用 https 網址開啟。", "error");
+    els.btnRecord.disabled = true;
+    return false;
+  }
+
+  if (isAmbiguousProtocol) {
+    // content:// 等非標準協定：不鎖按鈕，僅提示風險，讓使用者可以嘗試
+    const notice =
+      `目前是透過「${protocol}」開啟本頁面（例如用檔案管理員直接開啟），部分裝置的麥克風權限可能無法正常取得。` +
+      "若按下錄音按鈕沒有反應或跳出權限被拒絕的訊息，建議改用 https 網址開啟（見說明文件），會是最穩定的方式。";
+    if (els.platformNotice.classList.contains("hidden")) {
+      showPlatformNotice(notice);
+    }
+  }
+
+  return true;
+}
+
+// 先載入使用者先前儲存的設定，再進行平台相容性檢查；
+// 若偵測到 iOS 等不支援即時語音辨識的環境，checkBrowserSupport()
+// 會強制覆蓋 state.engine 為 "ai"，避免載入到過去存的無效設定。
+loadSettings();
+if (checkBrowserSupport()) {
+  updateStatus();
+}
+
+</script>
+</body>
+</html>
